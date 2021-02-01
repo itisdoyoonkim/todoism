@@ -1,0 +1,20 @@
+{
+  "name": "tut",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest",
+    "dev": "nodemon index.js",
+    "start": "node index.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.17.1",
+    "jest": "^26.6.3",
+    "mongodb": "^3.6.3",
+    "mongoose": "^5.11.14",
+    "validator": "^13.5.2"
+  }
+}
