@@ -1,8 +1,7 @@
 const mongoose = require("mongoose");
 const validator = require("validator");
 
-// mongoose converts User to lowercase & pluralize it to determine which collection to use.
-const UserModel = mongoose.model("User", {
+const UserSchema = new mongoose.Schema({
   name: {
     type: String,
     required: true,
@@ -10,6 +9,7 @@ const UserModel = mongoose.model("User", {
   email: {
     type: String,
     required: true,
+    unique: true,
     trim: true,
     lowercase: true,
     validate(value) {
@@ -41,5 +41,8 @@ const UserModel = mongoose.model("User", {
     },
   },
 });
+
+// mongoose converts User to lowercase & pluralize it to determine which collection to use.
+const UserModel = mongoose.model("User", UserSchema);
 
 module.exports = UserModel;
