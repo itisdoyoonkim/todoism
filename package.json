@@ -4,12 +4,15 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "jest",
+    "test": "jest --watch",
     "dev": "nodemon index.js",
     "start": "node index.js"
   },
   "author": "",
   "license": "ISC",
+  "jest": {
+    "testEnvironment": "node"
+  },
   "dependencies": {
     "bcryptjs": "^2.4.3",
     "express": "^4.17.1",
@@ -18,5 +21,8 @@
     "mongodb": "^3.6.3",
     "mongoose": "^5.11.14",
     "validator": "^13.5.2"
+  },
+  "devDependencies": {
+    "supertest": "^6.1.3"
   }
 }
