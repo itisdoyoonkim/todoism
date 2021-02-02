@@ -3,7 +3,7 @@ const { jwtSecret } = require("../config/config");
 const User = require("../models/user");
 
 const auth = async (req, res, next) => {
-  console.log("auth middleware running.");
+  console.log("auth middleware running.", req.header("Authorization"));
   try {
     const authToken = req.header("Authorization").replace("Bearer ", "");
     const decoded = jwt.verify(authToken, jwtSecret);
