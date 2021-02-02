@@ -2,8 +2,12 @@ const router = require("express").Router();
 const Task = require("../models/task");
 const auth = require("../middleware/auth");
 
+// PRIVATE
 router.post("/", auth, async (req, res) => {
-  const newTask = new Task(req.body);
+  const newTask = new Task({
+    ...req.body,
+    creator: req.user._id,
+  });
 
   try {
     await newTask.save();
@@ -13,9 +17,10 @@ router.post("/", auth, async (req, res) => {
   }
 });
 
-router.get("/", async (req, res) => {
+// PRIVATE
+router.get("/", auth, async (req, res) => {
   try {
-    const tasks = await Task.find();
+    const tasks = await Task.find({ creator: req.user._id });
     res.status(200).json(tasks);
   } catch (error) {
     console.error(error);
@@ -23,13 +28,19 @@ router.get("/", async (req, res) => {
   }
 });
 
-router.get("/:task_id", async (req, res) => {
+// PRIVATE
+router.get("/:task_id", auth, async (req, res) => {
   const taskId = req.params.task_id;
   try {
-    const task = await Task.findById(taskId);
+    const task = await Task.findOne({
+      _id: taskId,
+      creator: req.user._id,
+    });
+
     if (!task) {
       return res.status(404).json({ msg: "Task not found." });
     }
+
     res.status(200).json(task);
   } catch (error) {
     console.error(error);
@@ -37,7 +48,8 @@ router.get("/:task_id", async (req, res) => {
   }
 });
 
-router.patch("/:task_id", async (req, res) => {
+// PRIVATE
+router.patch("/:task_id", auth, async (req, res) => {
   const attemptedUpdateFields = Object.keys(req.body);
   const allowedUpdatableFields = ["description", "completed"];
 
@@ -54,19 +66,23 @@ router.patch("/:task_id", async (req, res) => {
   const taskId = req.params.task_id;
 
   try {
-    const updatedTask = await Task.findById(taskId);
-
-    attemptedUpdateFields.forEach((field) => {
-      return (task[field] = req.body[field]);
+    const updatedTask = await Task.findOne({
+      _id: taskId,
+      creator: req.user._id,
     });
-
-    await task.save();
 
     if (!updatedTask) {
       return res.status(404).json({
         msg: "Task not found.",
       });
     }
+
+    attemptedUpdateFields.forEach((field) => {
+      return (updatedTask[field] = req.body[field]);
+    });
+
+    await updatedTask.save();
+
     res.status(200).json(updatedTask);
   } catch (error) {
     console.error(error);
@@ -74,15 +90,20 @@ router.patch("/:task_id", async (req, res) => {
   }
 });
 
-router.delete("/:task_id", async (req, res) => {
+// PRIVATE
+router.delete("/:task_id", auth, async (req, res) => {
   const taskId = req.params.task_id;
 
   try {
-    const deletedTask = await Task.findByIdAndDelete(taskId);
+    const deletedTask = await Task.findOneAndDelete({
+      _id: taskId,
+      creator: req.user._id,
+    });
 
     if (!deletedTask) {
       return res.status(404).json({ msg: "No task found to delete." });
     }
+
     res.status(200).json(deletedTask);
   } catch (error) {
     console.error(error);

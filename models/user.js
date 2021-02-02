@@ -31,6 +31,12 @@ const UserSchema = new mongoose.Schema({
   },
 });
 
+UserSchema.virtual("tasks", {
+  ref: "Task",
+  foreignField: "creator",
+  localField: "_id",
+});
+
 // mongoose converts User to lowercase & pluralize it to determine which collection to use.
 const UserModel = mongoose.model("User", UserSchema);
 
