@@ -1,7 +1,11 @@
 const router = require("express").Router();
 const User = require("../models/user");
 const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+const { jwtSecret } = require("../config/config");
+const auth = require("../middleware/auth");
 
+// SIGN UP
 router.post("/", async (req, res) => {
   const newUser = new User(req.body);
 
@@ -12,34 +16,20 @@ router.post("/", async (req, res) => {
     newUser.password = hashedPassword;
 
     await newUser.save();
-    res.status(201).json({ msg: "New user created." });
+
+    const authToken = generateAuthToken(newUser._id);
+
+    res.status(201).json({ msg: "New user created.", authToken });
   } catch (error) {
     console.error(error);
     res.status(400).json({ msg: "An error has occurred." });
   }
 });
 
-router.get("/", async (req, res) => {
-  const users = await User.find();
-  res.status(200).json(users);
-});
-
-router.get("/:user_id", async (req, res) => {
-  const userId = req.params.user_id;
-  try {
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({ msg: "User not found." });
-    }
-    res.status(200).json(user);
-  } catch (error) {
-    res.status(500).json({ msg: "An error has occurred" });
-  }
-});
-
-router.patch("/:user_id", async (req, res) => {
+// EDIT USER INFO
+router.patch("/me", auth, async (req, res) => {
   const attemptedUpdateFields = Object.keys(req.body);
-  const allowedUpdatableFields = ["name", "email", "password", "age"];
+  const allowedUpdatableFields = ["name", "email"];
 
   const updateIsAllowed = attemptedUpdateFields.every((field) => {
     return allowedUpdatableFields.includes(field);
@@ -51,37 +41,29 @@ router.patch("/:user_id", async (req, res) => {
     });
   }
 
-  const userId = req.params.user_id;
-
   try {
-    const user = await User.findById(userId);
-
     attemptedUpdateFields.forEach((field) => {
-      return (user[field] = req.body[field]);
+      return (req.user[field] = req.body[field]);
     });
 
-    await user.save();
+    await req.user.save();
 
-    if (!user) {
-      return res.status(404).json({ msg: "User not found." });
-    }
+    // remove password from user info.
+    const userToModify = req.user.toObject();
+    delete userToModify.password;
 
-    res.status(200).json(user);
+    res.status(200).json({ user: userToModify });
   } catch (error) {
     console.error(error);
     res.status(400).json({ msg: "An error has occurred." });
   }
 });
 
-router.delete("/:user_id", async (req, res) => {
-  const userId = req.params.user_id;
-
+// DELETE A USER
+router.delete("/me", auth, async (req, res) => {
   try {
-    const deletedUser = await User.findByIdAndDelete(userId);
+    const deletedUser = await User.findByIdAndDelete(req.user._id);
 
-    if (!deletedUser) {
-      return res.status(404).json({ msg: "No user found to delete." });
-    }
     res.status(200).json(deletedUser);
   } catch (error) {
     console.error(error);
@@ -89,6 +71,7 @@ router.delete("/:user_id", async (req, res) => {
   }
 });
 
+// LOGIN
 router.post("/login", async (req, res) => {
   try {
     const user = await User.findOne({ email: req.body.email });
@@ -99,17 +82,39 @@ router.post("/login", async (req, res) => {
       });
     }
 
+    console.log(user);
+
     const isMatch = await bcrypt.compare(req.body.password, user.password);
+
+    console.log("isMatch", isMatch);
 
     if (!isMatch) {
       return res.status(401).json({ msg: "Unable to login." });
     }
 
-    res.status(200).json({ msg: "Login successful." });
+    // send jwt
+    const authToken = generateAuthToken(user._id);
+
+    // remove password from user info.
+    const userToModify = user.toObject();
+    delete userToModify.password;
+
+    res.status(200).json({ user: userToModify, authToken });
   } catch (error) {
     console.error(error);
     res.status(500).json({ msg: "An error has occurred." });
   }
 });
+
+router.get("/me", auth, async (req, res) => {
+  res.status(200).json(req.user);
+});
+
+// utility functions
+const generateAuthToken = (userId) => {
+  return jwt.sign({ _id: userId }, jwtSecret, {
+    expiresIn: "1 week",
+  });
+};
 
 module.exports = router;

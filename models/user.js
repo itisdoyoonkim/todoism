@@ -29,17 +29,6 @@ const UserSchema = new mongoose.Schema({
       }
     },
   },
-  age: {
-    type: Number,
-    default: 0,
-    validate(value) {
-      if (value < 0) {
-        throw new Error(
-          "Age cannot be negative, not even for Benjamin Button."
-        );
-      }
-    },
-  },
 });
 
 // mongoose converts User to lowercase & pluralize it to determine which collection to use.
