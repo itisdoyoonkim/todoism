@@ -14,7 +14,17 @@ npm install
 
 ## Usage
 
-Visit ****\_****.
+Visit \***\*\_\*\***.
+
+## Testing
+
+It will use the actual database instead of a test database to run tests (i.e. perform test CRUD operations) because I don't plan on deploying this app for public use yet.
+
+In root directory:
+
+```bash
+npm run test
+```
 
 ## Contributing
 
